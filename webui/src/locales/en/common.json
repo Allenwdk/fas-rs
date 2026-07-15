@@ -39,5 +39,10 @@
   "delete": "Delete",
   "search_app": "Search application...",
   "no_apps_found": "No applications found",
-  "loading_apps": "Loading applications..."
+  "loading_apps": "Loading applications...",
+  "fps_lock": "Fps Lock",
+  "fps_lock_desc": "Force lock target fps to upper bound when above lower bound",
+  "add_fps_lock": "Add Fps Lock",
+  "no_fps_lock": "No fps lock configured",
+  "fps_min_max": "FPS Min / Max"
 }

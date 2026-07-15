@@ -311,12 +311,13 @@ impl Looper {
                 return None;
             };
             let target_fps = self.config.target_fps(&pkg)?;
+            let fps_lock = self.config.fps_lock(&pkg);
 
             info!("New fas buffer on: [{pkg}]");
 
             trigger_load_fas(&self.extension, pid, pkg.clone());
 
-            let mut buffer = Buffer::new(target_fps, pid, pkg);
+            let mut buffer = Buffer::new(target_fps, pid, pkg, fps_lock);
             buffer.push_frametime(frametime, &self.extension);
 
             self.fas_state.buffer = Some(buffer);

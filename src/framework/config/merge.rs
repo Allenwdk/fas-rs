@@ -26,6 +26,8 @@ use crate::framework::error::{Error, Result};
 struct ConfigData {
     pub config: Table,
     pub game_list: Table,
+    #[serde(default)]
+    pub fps_lock: Table,
     pub powersave: Table,
     pub balance: Table,
     pub performance: Table,
@@ -52,6 +54,7 @@ impl Config {
             let new_conf = ConfigData {
                 config: std_conf.config,
                 game_list: local_conf.game_list,
+                fps_lock: local_conf.fps_lock,
                 powersave: std_conf.powersave,
                 balance: std_conf.balance,
                 performance: std_conf.performance,

@@ -15,6 +15,12 @@ scene_game_list = true
 "com.tencent.tmgp.pubgmhd" = [60, 90, 120]
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
+# 强制锁帧：键为包名，值为 [下限, 上限]
+# 当检测到当前帧率高于下限时，直接将目标帧率锁定为上限，跳过档位匹配算法
+# 当前帧率不高于下限时，回退到 [下限, 上限] 的档位匹配
+# [fps_lock]
+# "com.miHoYo.Yuanshen" = [60, 120]
+
 [powersave]
 margin_fps = 3.0
 core_temp_thresh = 80000

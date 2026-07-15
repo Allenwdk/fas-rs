@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useConfig } from "@/hooks/useConfig";
 import { GeneralConfig } from "@/components/config/GeneralConfig";
 import { GameList } from "@/components/config/GameList";
+import { FpsLockList } from "@/components/config/FpsLockList";
 import { PowerModes } from "@/components/config/PowerModes";
 import { Settings, Gamepad, Zap } from "lucide-react";
 import { ModeSwitch } from "@/components/config/ModeSwitch";
@@ -15,6 +16,7 @@ export default function Home() {
     configOptions,
     gameList,
     powerModes,
+    fpsLock,
     newGamePackage,
     setNewGamePackage,
     newGameFps,
@@ -24,12 +26,29 @@ export default function Home() {
     editingGame,
     editingGameFps,
     setEditingGameFps,
+    newFpsLockPackage,
+    setNewFpsLockPackage,
+    newFpsLockMin,
+    setNewFpsLockMin,
+    newFpsLockMax,
+    setNewFpsLockMax,
+    isAddingFpsLock,
+    setIsAddingFpsLock,
+    editingFpsLock,
+    editingFpsLockMin,
+    editingFpsLockMax,
+    setEditingFpsLockMin,
+    setEditingFpsLockMax,
     toggleConfigOption,
     updatePowerMode,
     addNewGame,
     removeGame,
     startEditGame,
     saveEditedGame,
+    addNewFpsLock,
+    removeFpsLock,
+    startEditFpsLock,
+    saveEditedFpsLock,
   } = useConfig();
 
   return (
@@ -99,6 +118,26 @@ export default function Home() {
               removeGame={removeGame}
               startEditGame={startEditGame}
               saveEditedGame={saveEditedGame}
+            />
+            <FpsLockList
+              fpsLock={fpsLock}
+              newFpsLockPackage={newFpsLockPackage}
+              setNewFpsLockPackage={setNewFpsLockPackage}
+              newFpsLockMin={newFpsLockMin}
+              setNewFpsLockMin={setNewFpsLockMin}
+              newFpsLockMax={newFpsLockMax}
+              setNewFpsLockMax={setNewFpsLockMax}
+              isAddingFpsLock={isAddingFpsLock}
+              setIsAddingFpsLock={setIsAddingFpsLock}
+              editingFpsLock={editingFpsLock}
+              editingFpsLockMin={editingFpsLockMin}
+              editingFpsLockMax={editingFpsLockMax}
+              setEditingFpsLockMin={setEditingFpsLockMin}
+              setEditingFpsLockMax={setEditingFpsLockMax}
+              addNewFpsLock={addNewFpsLock}
+              removeFpsLock={removeFpsLock}
+              startEditFpsLock={startEditFpsLock}
+              saveEditedFpsLock={saveEditedFpsLock}
             />
           </TabsContent>
 

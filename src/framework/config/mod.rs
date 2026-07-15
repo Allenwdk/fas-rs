@@ -78,7 +78,37 @@ impl Config {
         let pkg = pkg.as_ref();
 
         self.inner.config().game_list.contains_key(pkg)
+            || self.inner.config().fps_lock.contains_key(pkg)
             || self.inner.config().scene_game_list.contains(pkg)
+    }
+
+    pub fn fps_lock<S>(&mut self, pkg: S) -> Option<(u32, u32)>
+    where
+        S: AsRef<str>,
+    {
+        let pkg = pkg.as_ref();
+        let pkg = pkg.split(':').next()?;
+        let value = self.inner.config().fps_lock.get(pkg)?.clone();
+
+        match value {
+            Value::Array(arr) => {
+                let mut nums: Vec<u32> = arr
+                    .iter()
+                    .filter_map(toml::Value::as_integer)
+                    .map(|i| i as u32)
+                    .collect();
+                if nums.len() != 2 {
+                    error!("fps_lock of {pkg} must be [min, max], got {arr:?}");
+                    return None;
+                }
+                nums.sort_unstable();
+                Some((nums[0], nums[1]))
+            }
+            _ => {
+                error!("fps_lock of {pkg} must be an array [min, max]");
+                None
+            }
+        }
     }
 
     pub fn target_fps<S>(&mut self, pkg: S) -> Option<TargetFps>
@@ -87,6 +117,10 @@ impl Config {
     {
         let pkg = pkg.as_ref();
         let pkg = pkg.split(':').next()?;
+
+        if let Some((min, max)) = self.fps_lock(pkg) {
+            return Some(TargetFps::Array(vec![min, max]));
+        }
 
         self.inner.config().game_list.get(pkg).cloned().map_or_else(
             || {

@@ -13,6 +13,7 @@ import {
   PowerModes,
   FpsValue,
   PowerSettings,
+  FpsLockList,
 } from "@/types/config";
 import { toast } from "sonner";
 import { exec } from "../lib/kernelsu";
@@ -25,6 +26,8 @@ const defaultConfig: ConfigOptions = {
 };
 
 const defaultGameList: GameList = {};
+
+const defaultFpsLock: FpsLockList = {};
 
 const defaultPowerModes: PowerModes = {
   powersave: {
@@ -49,6 +52,7 @@ interface ConfigContextType {
   configOptions: ConfigOptions;
   gameList: GameList;
   powerModes: PowerModes;
+  fpsLock: FpsLockList;
   newGamePackage: string;
   setNewGamePackage: Dispatch<SetStateAction<string>>;
   newGameFps: string;
@@ -58,6 +62,19 @@ interface ConfigContextType {
   editingGame: string | null;
   editingGameFps: string;
   setEditingGameFps: Dispatch<SetStateAction<string>>;
+  newFpsLockPackage: string;
+  setNewFpsLockPackage: Dispatch<SetStateAction<string>>;
+  newFpsLockMin: string;
+  setNewFpsLockMin: Dispatch<SetStateAction<string>>;
+  newFpsLockMax: string;
+  setNewFpsLockMax: Dispatch<SetStateAction<string>>;
+  isAddingFpsLock: boolean;
+  setIsAddingFpsLock: Dispatch<SetStateAction<boolean>>;
+  editingFpsLock: string | null;
+  editingFpsLockMin: string;
+  setEditingFpsLockMin: Dispatch<SetStateAction<string>>;
+  editingFpsLockMax: string;
+  setEditingFpsLockMax: Dispatch<SetStateAction<string>>;
   toggleConfigOption: (option: keyof ConfigOptions) => void;
   updatePowerMode: (
     mode: keyof PowerModes,
@@ -68,6 +85,10 @@ interface ConfigContextType {
   removeGame: (gamePackage: string) => void;
   startEditGame: (game: string, fps: FpsValue) => void;
   saveEditedGame: () => void;
+  addNewFpsLock: () => void;
+  removeFpsLock: (gamePackage: string) => void;
+  startEditFpsLock: (game: string, fpsLock: [number, number]) => void;
+  saveEditedFpsLock: () => void;
   saveConfiguration: () => void;
   toggleLanguage: () => void;
   language: "en" | "zh";
@@ -82,6 +103,7 @@ export function useConfig() {
     useState<ConfigOptions>(defaultConfig);
   const [gameList, setGameList] = useState<GameList>(defaultGameList);
   const [powerModes, setPowerModes] = useState<PowerModes>(defaultPowerModes);
+  const [fpsLock, setFpsLock] = useState<FpsLockList>(defaultFpsLock);
   const [language, setLanguage] = useState<"en" | "zh">("en");
 
   useEffect(() => {
@@ -91,6 +113,7 @@ export function useConfig() {
         setConfigOptions(configData.configOptions || defaultConfig);
         setGameList(configData.gameList || defaultGameList);
         setPowerModes(configData.powerModes || defaultPowerModes);
+        setFpsLock(configData.fpsLock || defaultFpsLock);
       } catch (_error) {
         toast.error("Failed to load configuration");
       }
@@ -118,6 +141,14 @@ export function useConfig() {
   const [isAddingGame, setIsAddingGame] = useState<boolean>(false);
   const [editingGame, setEditingGame] = useState<string | null>(null);
   const [editingGameFps, setEditingGameFps] = useState<string>("");
+
+  const [newFpsLockPackage, setNewFpsLockPackage] = useState<string>("");
+  const [newFpsLockMin, setNewFpsLockMin] = useState<string>("");
+  const [newFpsLockMax, setNewFpsLockMax] = useState<string>("");
+  const [isAddingFpsLock, setIsAddingFpsLock] = useState<boolean>(false);
+  const [editingFpsLock, setEditingFpsLock] = useState<string | null>(null);
+  const [editingFpsLockMin, setEditingFpsLockMin] = useState<string>("");
+  const [editingFpsLockMax, setEditingFpsLockMax] = useState<string>("");
 
   const debouncedSave = useDebouncedCallback(() => {
     saveConfiguration();
@@ -218,6 +249,74 @@ export function useConfig() {
     }
   };
 
+  const addNewFpsLock = (): void => {
+    if (newFpsLockPackage && newFpsLockMin && newFpsLockMax) {
+      const min = parseInt(newFpsLockMin.trim());
+      const max = parseInt(newFpsLockMax.trim());
+      if (isNaN(min) || isNaN(max)) {
+        toast.error("Invalid FPS values");
+        return;
+      }
+      const sorted: [number, number] = min <= max ? [min, max] : [max, min];
+
+      setFpsLock({
+        ...fpsLock,
+        [newFpsLockPackage]: sorted,
+      });
+
+      setNewFpsLockPackage("");
+      setNewFpsLockMin("");
+      setNewFpsLockMax("");
+      setIsAddingFpsLock(false);
+      toast.success("Fps lock added successfully!");
+      debouncedSave();
+    }
+  };
+
+  const removeFpsLock = (gamePackage: string): void => {
+    const updatedFpsLock = { ...fpsLock };
+    delete updatedFpsLock[gamePackage];
+    setFpsLock(updatedFpsLock);
+    toast.success("Fps lock removed successfully!");
+    debouncedSave();
+  };
+
+  const startEditFpsLock = (
+    game: string,
+    lock: [number, number],
+  ): void => {
+    if (game === "") {
+      setEditingFpsLock(null);
+      return;
+    }
+    setEditingFpsLock(game);
+    setEditingFpsLockMin(lock[0].toString());
+    setEditingFpsLockMax(lock[1].toString());
+  };
+
+  const saveEditedFpsLock = (): void => {
+    if (editingFpsLock && editingFpsLockMin && editingFpsLockMax) {
+      const min = parseInt(editingFpsLockMin.trim());
+      const max = parseInt(editingFpsLockMax.trim());
+      if (isNaN(min) || isNaN(max)) {
+        toast.error("Invalid FPS values");
+        return;
+      }
+      const sorted: [number, number] = min <= max ? [min, max] : [max, min];
+
+      setFpsLock({
+        ...fpsLock,
+        [editingFpsLock]: sorted,
+      });
+
+      setEditingFpsLock(null);
+      setEditingFpsLockMin("");
+      setEditingFpsLockMax("");
+      toast.success("Fps lock updated!");
+      debouncedSave();
+    }
+  };
+
   useEffect(() => {
     return () => {
       debouncedSave.cancel();
@@ -230,17 +329,19 @@ export function useConfig() {
         configOptions,
         gameList,
         powerModes,
+        fpsLock,
       });
       toast.success("Configuration saved successfully!");
     } catch (error) {
       toast.error("Failed to save configuration: " + error);
     }
-  }, [configOptions, gameList, powerModes]);
+  }, [configOptions, gameList, powerModes, fpsLock]);
 
   const readConfig = async (): Promise<{
     configOptions: ConfigOptions;
     gameList: GameList;
     powerModes: PowerModes;
+    fpsLock: FpsLockList;
   }> => {
     if (process.env.NODE_ENV === "development") {
       return {
@@ -258,6 +359,9 @@ export function useConfig() {
           balance: { margin_fps: 1.0, core_temp_thresh: 90000 },
           performance: { margin_fps: 0.3, core_temp_thresh: 95000 },
           fast: { margin_fps: 0, core_temp_thresh: 95000 },
+        },
+        fpsLock: {
+          "com.example.game3": [60, 120],
         },
       };
     }
@@ -278,6 +382,7 @@ export function useConfig() {
     const configRaw = TOML.parse(stdout) as {
       config: ConfigOptions;
       game_list: GameList;
+      fps_lock?: FpsLockList;
       powersave: PowerSettings;
       balance: PowerSettings;
       performance: PowerSettings;
@@ -287,6 +392,7 @@ export function useConfig() {
     return {
       configOptions: configRaw.config,
       gameList: configRaw.game_list,
+      fpsLock: configRaw.fps_lock || defaultFpsLock,
       powerModes: {
         powersave: configRaw.powersave,
         balance: configRaw.balance,
@@ -300,6 +406,7 @@ export function useConfig() {
     configOptions: ConfigOptions;
     gameList: GameList;
     powerModes: PowerModes;
+    fpsLock: FpsLockList;
   }): Promise<void> => {
     if (process.env.NODE_ENV === "development") {
       console.log("Development mode: Skipping actual config write");
@@ -310,6 +417,9 @@ export function useConfig() {
       const tomlContent = TOML.stringify({
         config: data.configOptions,
         game_list: data.gameList,
+        ...(Object.keys(data.fpsLock).length > 0
+          ? { fps_lock: data.fpsLock }
+          : {}),
         powersave: data.powerModes.powersave,
         balance: data.powerModes.balance,
         performance: data.powerModes.performance,
@@ -343,6 +453,7 @@ export function useConfig() {
     configOptions,
     gameList,
     powerModes,
+    fpsLock,
     newGamePackage,
     setNewGamePackage,
     newGameFps,
@@ -352,12 +463,29 @@ export function useConfig() {
     editingGame,
     editingGameFps,
     setEditingGameFps,
+    newFpsLockPackage,
+    setNewFpsLockPackage,
+    newFpsLockMin,
+    setNewFpsLockMin,
+    newFpsLockMax,
+    setNewFpsLockMax,
+    isAddingFpsLock,
+    setIsAddingFpsLock,
+    editingFpsLock,
+    editingFpsLockMin,
+    setEditingFpsLockMin,
+    editingFpsLockMax,
+    setEditingFpsLockMax,
     toggleConfigOption,
     updatePowerMode,
     addNewGame,
     removeGame,
     startEditGame,
     saveEditedGame,
+    addNewFpsLock,
+    removeFpsLock,
+    startEditFpsLock,
+    saveEditedFpsLock,
     toggleLanguage,
     language,
   };

@@ -39,5 +39,10 @@
   "delete": "删除",
   "search_app": "搜索应用...",
   "no_apps_found": "未找到应用",
-  "loading_apps": "正在加载应用..."
+  "loading_apps": "正在加载应用...",
+  "fps_lock": "强制锁帧",
+  "fps_lock_desc": "当前帧率高于下限时，直接将目标帧率锁定为上限",
+  "add_fps_lock": "添加锁帧",
+  "no_fps_lock": "未配置锁帧",
+  "fps_min_max": "帧率 下限 / 上限"
 }

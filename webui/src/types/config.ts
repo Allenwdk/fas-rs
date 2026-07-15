@@ -27,3 +27,9 @@ export type FpsValue = number | number[];
 export type GameList = {
   [packageName: string]: FpsValue;
 };
+
+export type FpsLock = [number, number];
+
+export type FpsLockList = {
+  [packageName: string]: FpsLock;
+};

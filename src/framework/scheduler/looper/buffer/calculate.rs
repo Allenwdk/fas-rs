@@ -93,12 +93,24 @@ impl Buffer {
     }
 
     fn target_fps(&self) -> Option<u32> {
+        let current_fps = self.frametime_state.current_fps_long;
+
+        // 强制锁帧：当前帧率高于下限 → 直接锁定为上限，跳过档位匹配算法
+        if let Some((min, max)) = self.fps_lock {
+            if current_fps > f64::from(min) {
+                #[cfg(debug_assertions)]
+                debug!(
+                    "fps_lock active: current {current_fps:.2} > min {min}, lock to {max}"
+                );
+                return Some(max);
+            }
+            // 当前帧率不高于下限 → 落到下方回退算法
+        }
+
         let target_fpses = match &self.target_fps_state.target_fps_config {
             TargetFps::Value(t) => vec![*t],
             TargetFps::Array(arr) => arr.clone(),
         };
-
-        let current_fps = self.frametime_state.current_fps_long;
 
         if unlikely(current_fps < (target_fpses.first()?.saturating_sub(10).max(10)).into()) {
             return None;

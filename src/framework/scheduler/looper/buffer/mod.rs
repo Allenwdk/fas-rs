@@ -103,15 +103,22 @@ pub struct Buffer {
     pub frametime_state: FrameTimeState,
     pub target_fps_state: TargetFpsState,
     pub state: BufferState,
+    pub fps_lock: Option<(u32, u32)>,
 }
 
 impl Buffer {
-    pub fn new(target_fps_config: TargetFps, pid: pid_t, pkg: String) -> Self {
+    pub fn new(
+        target_fps_config: TargetFps,
+        pid: pid_t,
+        pkg: String,
+        fps_lock: Option<(u32, u32)>,
+    ) -> Self {
         Self {
             package_info: PackageInfo { pid, pkg },
             frametime_state: FrameTimeState::new(),
             target_fps_state: TargetFpsState::new(target_fps_config),
             state: BufferState::new(),
+            fps_lock,
         }
     }
 

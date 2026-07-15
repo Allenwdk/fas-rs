@@ -26,6 +26,8 @@ use toml::Table;
 pub struct ConfigData {
     pub config: Config,
     pub game_list: Table,
+    #[serde(default)]
+    pub fps_lock: Table,
     #[serde(skip)]
     pub scene_game_list: HashSet<String>,
     pub powersave: ModeConfig,
