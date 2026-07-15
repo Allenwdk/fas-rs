@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# Copyright 2023-2025, shadow3aaa
+# Copyright 2023-2025, shadow3, shadow3aaa
 #
 # This file is part of fas-rs.
 #
@@ -24,6 +24,4 @@ DIR=/sdcard/Android/fas-rs
 	done
 
 	rm -rf $DIR
-	rm -f /data/powercfg.json
-	rm -f /data/powercfg.sh
 } & # do not block boot

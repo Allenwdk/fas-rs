@@ -1,0 +1,80 @@
+{
+  "friendly": "FAS-RS",
+  "modes": [
+    {
+      "mode": [
+        "powersave"
+      ],
+      "call": [
+        [
+          "@limiters",
+          "NONE"
+        ],
+        [
+          "/dev/fas_rs/mode",
+          "powersave"
+        ]
+      ]
+    },
+    {
+      "mode": [
+        "balance"
+      ],
+      "call": [
+        [
+          "@limiters",
+          "NONE"
+        ],
+        [
+          "/dev/fas_rs/mode",
+          "balance"
+        ]
+      ]
+    },
+    {
+      "mode": [
+        "performance"
+      ],
+      "call": [
+        [
+          "@limiters",
+          "NONE"
+        ],
+        [
+          "/dev/fas_rs/mode",
+          "performance"
+        ]
+      ]
+    },
+    {
+      "mode": [
+        "fast"
+      ],
+      "call": [
+        [
+          "@limiters",
+          "NONE"
+        ],
+        [
+          "/dev/fas_rs/mode",
+          "fast"
+        ]
+      ]
+    },
+    {
+      "mode": [
+        "*"
+      ],
+      "call": [
+        [
+          "@limiters",
+          "NONE"
+        ],
+        [
+          "/dev/fas_rs/mode",
+          "fast"
+        ]
+      ]
+    }
+  ]
+}
