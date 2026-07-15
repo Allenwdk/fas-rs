@@ -41,21 +41,32 @@ impl WindowsInfo {
     }
 
     fn parse_top_app(dump: &str) -> Vec<i32> {
-        let Some(focused_app_line) = dump
+        // Some devices (e.g. phones with a back/secondary screen, foldables)
+        // report more than one `mFocusedApp` line in the window dump.
+        // Collect every one and resolve a PID for each so multi-display
+        // setups are handled correctly.
+        let packages: Vec<&str> = dump
             .lines()
-            .find(|line| line.trim().starts_with("mFocusedApp="))
-        else {
-            return Vec::new();
-        };
-        let Some(package_name) = Self::extract_package_name(focused_app_line) else {
-            return Vec::new();
-        };
+            .filter(|line| line.trim().starts_with("mFocusedApp="))
+            .filter_map(Self::extract_package_name)
+            .collect();
 
-        // Try modern parser, if it fails, fall back to legacy parser.
-        let pid = Self::parse_a16_format(dump, package_name)
-            .or_else(|| Self::parse_a15_format(dump, package_name));
+        if packages.is_empty() {
+            return Vec::new();
+        }
 
-        pid.map_or_else(Vec::new, |p| vec![p])
+        let mut pids = Vec::new();
+        for pkg in packages {
+            let Some(pid) = Self::parse_a16_format(dump, pkg)
+                .or_else(|| Self::parse_a15_format(dump, pkg))
+            else {
+                continue;
+            };
+            if !pids.contains(&pid) {
+                pids.push(pid);
+            }
+        }
+        pids
     }
 
     fn extract_package_name(line: &str) -> Option<&str> {
