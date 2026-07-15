@@ -64,6 +64,7 @@ impl Config {
         }
 
         let config = Self::table_merge(std_conf.config, local_conf.config);
+        let fps_lock = Self::table_merge(std_conf.fps_lock, local_conf.fps_lock);
         let powersave = Self::table_merge(std_conf.powersave, local_conf.powersave);
         let balance = Self::table_merge(std_conf.balance, local_conf.balance);
         let performance = Self::table_merge(std_conf.performance, local_conf.performance);
@@ -72,6 +73,7 @@ impl Config {
         let new_conf = ConfigData {
             config,
             game_list: local_conf.game_list,
+            fps_lock,
             powersave,
             balance,
             performance,
