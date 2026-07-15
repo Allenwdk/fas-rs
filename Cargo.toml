@@ -28,6 +28,14 @@ license = "GPL-3.0"
 readme = "README.md"
 repository = "https://github.com/shadow3aaa/fas-rs"
 
+[package.metadata]
+fas_rs_author = "shadow3"
+fas_rs_mod_author = "Allenwdk"
+scene_author = "helloklf"
+versionCodeName = "Geometric Samsara"
+mod_version = "v1"
+mod_versionCodeName = "26W29A"
+
 [dependencies]
 likely_stable = "0.1.3"
 parking_lot = "0.12.5"

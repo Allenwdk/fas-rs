@@ -20,10 +20,8 @@ MODDIR=${0%/*}
 DIR=/sdcard/Android/fas-rs
 MERGE_FLAG=$DIR/.need_merge
 LOG=$DIR/fas_log.txt
-
-sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
-
-resetprop fas-rs-installed true
+VTOOLSDIR=/data/data/com.omarea.vtools/files
+PATCH_COMPLETE=$VTOOLSDIR/_FASRS.json
 
 until [ -d $DIR ]; do
 	sleep 1
@@ -37,3 +35,17 @@ fi
 
 killall fas-rs
 RUST_BACKTRACE=1 nohup $MODDIR/fas-rs run $MODDIR/games.toml >$LOG 2>&1 &
+
+until [ -d /dev/fas_rs ]; do
+	sleep 1
+done
+
+until [ -d $VTOOLSDIR ]; do
+	sleep 1
+done
+
+sh $MODDIR/vtools/scene-patcher.sh
+
+until [ -f $PATCH_COMPLETE ]; do
+	sleep 1
+done

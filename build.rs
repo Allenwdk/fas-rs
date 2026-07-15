@@ -26,6 +26,24 @@ struct Package {
     pub name: String,
     pub version: String,
     pub description: String,
+    #[serde(default)]
+    pub metadata: Metadata,
+}
+
+#[derive(Deserialize, Default)]
+struct Metadata {
+    #[serde(default)]
+    pub fas_rs_author: String,
+    #[serde(default)]
+    pub fas_rs_mod_author: String,
+    #[serde(default)]
+    pub scene_author: String,
+    #[serde(rename = "versionCodeName", default)]
+    pub version_code_name: String,
+    #[serde(default)]
+    pub mod_version: String,
+    #[serde(rename = "mod_versionCodeName", default)]
+    pub mod_version_code_name: String,
 }
 
 #[derive(Deserialize)]
@@ -79,14 +97,17 @@ fn cal_version_code(version: &str) -> Result<usize> {
 
 fn gen_module_prop(data: &CargoConfig) -> Result<()> {
     let package = &data.package;
+    let metadata = &package.metadata;
     let id = package.name.replace('-', "_");
     let version_code = cal_version_code(&package.version)?;
-    let authors = &package.authors;
-    let mut author = String::new();
-    for a in authors {
-        author += &format!("{a} ");
+
+    let mut author = package.authors.join(", ");
+    if !metadata.fas_rs_mod_author.is_empty() {
+        if !author.is_empty() {
+            author += ", ";
+        }
+        author += &metadata.fas_rs_mod_author;
     }
-    let author = author.trim();
 
     let mut file = fs::OpenOptions::new()
         .create(true)
@@ -98,7 +119,25 @@ fn gen_module_prop(data: &CargoConfig) -> Result<()> {
     writeln!(file, "name={}", package.name)?;
     writeln!(file, "version=v{}", package.version)?;
     writeln!(file, "versionCode={version_code}")?;
+    if !metadata.version_code_name.is_empty() {
+        writeln!(file, "versionCodeName={}", metadata.version_code_name)?;
+    }
+    if !metadata.mod_version.is_empty() {
+        writeln!(file, "mod_version={}", metadata.mod_version)?;
+    }
+    if !metadata.mod_version_code_name.is_empty() {
+        writeln!(file, "mod_versionCodeName={}", metadata.mod_version_code_name)?;
+    }
     writeln!(file, "author={author}")?;
+    if !metadata.fas_rs_author.is_empty() {
+        writeln!(file, "fas_rs_author={}", metadata.fas_rs_author)?;
+    }
+    if !metadata.fas_rs_mod_author.is_empty() {
+        writeln!(file, "fas_rs_mod_author={}", metadata.fas_rs_mod_author)?;
+    }
+    if !metadata.scene_author.is_empty() {
+        writeln!(file, "scene_author={}", metadata.scene_author)?;
+    }
     writeln!(file, "description={}", package.description)?;
 
     Ok(())
