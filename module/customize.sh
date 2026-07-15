@@ -24,7 +24,7 @@ DIR=/sdcard/Android/fas-rs
 CONF=$DIR/games.toml
 MERGE_FLAG=$DIR/.need_merge
 LOCALE=$(getprop persist.sys.locale)
-tuner_exist=`grep -E "SCENE8" $SCENE_DIR/manifest.json`
+tuner_exist=`grep -E "SCENE" $SCENE_DIR/manifest.json`
 tuner_unpatchable=`grep -E "Customized|Unofficial" $SCENE_DIR/manifest.json`
 scene_config=`grep -E "LP|HP|EP" $SCENE_DIR/manifest.json`
 mod_exist=`grep -E "fas_rs_mod" $SCENE_DIR/manifest.json`
@@ -56,7 +56,7 @@ elif uname -r | awk -F. '{if ($1 < 5 || ($1 == 5 && $2 < 8)) exit 0; else exit 1
 	local_print "- 内核版本过低，需要5.8或以上 !" "- The kernel version is too low. Requires 5.8+ !"
 	abort
 elif [ -z "$tuner_exist" ]; then
-    local_print "- 检测不到SCENE8调度。" "- Can't find SCENE8 tuner."
+    local_print "- 检测不到SCENE调度。" "- Can't find SCENE tuner."
     abort
 elif [ -n "$tuner_unpatchable" ]; then
     local_print "- 不支持修补此配置文件，请先切换到官方的任一调度配置(LP/HP/EP)。" "- This config is unpatchable, please switch to any official tuner config(LP/HP/EP) first !"
