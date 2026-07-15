@@ -78,7 +78,7 @@ fn get_normalized_last_frame(buffer: &Buffer, target_fps: f64) -> Duration {
     } else {
         buffer.frametime_state.additional_frametime.max(last_frame)
     }
-    .mul_f64(target_fps)
+    .mul_f64(target_fps.max(0.0))
 }
 
 fn adjust_target_fps(target_fps: f64, controller_state: &mut ControllerState) -> f64 {
