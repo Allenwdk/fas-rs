@@ -172,6 +172,9 @@ impl Info {
             .context("No frequencies available")?
             .to_string();
         self.verify_freq = None;
+        // 在写 sysfs 之前读取当前实际频率，避免 cur_fas_freq 残留为初始最大频率
+        // 导致下一次 fas_update_freq 在 util_max 为 None 时直接拉到 max_freq
+        self.cur_fas_freq = self.read_freq();
 
         file_handler.write_with_workround(self.max_freq_path(), &max_freq)?;
         file_handler.write_with_workround(self.min_freq_path(), &min_freq)?;
