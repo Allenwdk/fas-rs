@@ -66,17 +66,12 @@ pub fn calculate_control(
 }
 
 fn get_normalized_last_frame(buffer: &Buffer, target_fps: f64) -> Duration {
-    let last_frame = buffer
-        .frametime_state
-        .frametimes
-        .front()
-        .copied()
-        .unwrap_or_default();
+    let avg_frame = buffer.frametime_state.avg_time_short;
 
     if buffer.frametime_state.additional_frametime == Duration::ZERO {
-        last_frame
+        avg_frame
     } else {
-        buffer.frametime_state.additional_frametime.max(last_frame)
+        buffer.frametime_state.additional_frametime.max(avg_frame)
     }
     .mul_f64(target_fps.max(0.0))
 }
