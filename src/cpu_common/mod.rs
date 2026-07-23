@@ -216,9 +216,7 @@ impl Controller {
             .max()
             .unwrap_or_default();
 
-        if is_janked {
-            self.util_max = None;
-        } else {
+        if !is_janked {
             self.update_util_max();
         }
 
@@ -227,7 +225,7 @@ impl Controller {
             .map(|cpu| {
                 (
                     cpu.policy,
-                    if is_janked || self.util_max.is_none() {
+                    if self.util_max.is_none() {
                         cur_fas_freq_max
                             .saturating_add(control)
                             .clamp(0, self.max_freq)

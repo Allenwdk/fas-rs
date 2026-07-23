@@ -74,7 +74,7 @@ impl Buffer {
 
     pub fn calculate_target_fps(&mut self, extension: &Extension) {
         let new_target_fps = self.target_fps();
-        if self.target_fps_state.target_fps != new_target_fps || new_target_fps.is_none() {
+        if self.target_fps_state.target_fps != new_target_fps {
             self.reset_frametime_state();
             if let Some(target_fps) = new_target_fps {
                 self.trigger_target_fps_change(extension, target_fps);
