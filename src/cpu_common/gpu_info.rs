@@ -17,7 +17,6 @@
 
 use std::{
     fs,
-    path::PathBuf,
     time::{Duration, Instant},
 };
 
@@ -31,7 +30,7 @@ pub struct GpuInfo {
     /// Index i corresponds to power level i.
     pub freqs: Vec<isize>,
     /// Last frequency set by FAS (in Hz)
-    cur_fas_freq: isize,
+    pub cur_fas_freq: isize,
     verify_freq: Option<isize>,
     verify_timer: Instant,
 }
