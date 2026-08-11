@@ -49,7 +49,7 @@ pub fn calculate_control(
 
     let target_fps = (target_fps + target_fps_offset_thermal).clamp(0.0, target_fps);
     let adjusted_target_fps = adjust_target_fps(target_fps, controller_state) - margin_fps;
-    let adjusted_last_frame = get_normalized_last_frame(buffer, adjusted_target_fps);
+    let adjusted_last_frame = get_normalized_last_frame(buffer, adjusted_target_fps.max(1.0));
     let target_frametime = Duration::from_secs(1);
 
     #[cfg(debug_assertions)]
