@@ -88,7 +88,7 @@ pub struct Looper {
 impl Looper {
     pub fn new(
         analyzer: Analyzer,
-        config: Config,
+        mut config: Config,
         node: Node,
         extension: Extension,
         controller: Controller,
