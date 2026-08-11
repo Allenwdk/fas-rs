@@ -18,16 +18,40 @@
 name: ci-build
 on:
   push:
-    branches: ["master"]
+    branches: ["master", "gpu-version"]
   pull_request:
     branches: ["master"]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "要构建的分支"
+        required: true
+        default: "master"
+        type: choice
+        options:
+          - master
+          - dev
+          - beta
+          - gpu-version
+      build_type:
+        description: "构建类型"
+        required: true
+        default: "both"
+        type: choice
+        options:
+          - both
+          - release
+          - debug
 env:
   CARGO_TERM_COLOR: always
 jobs:
   release-build:
+    if: github.event_name != 'workflow_dispatch' || inputs.build_type != 'debug'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.ref }}
       - name: Setup ndk
         run: |
           ndk_url=$(wget -qO- https://github.com/android/ndk/releases/latest | grep -e 'https://dl.google.com/android/repository/android-ndk-.*-linux.zip' | sed -n 's/.*<a href="\([^"]*\)".*/\1/p')
@@ -72,9 +96,12 @@ jobs:
           path: output/artifact/release
 
   debug-build:
+    if: github.event_name != 'workflow_dispatch' || inputs.build_type != 'release'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.ref }}
       - name: Setup ndk
         run: |
           ndk_url=$(wget -qO- https://github.com/android/ndk/releases/latest | grep -e 'https://dl.google.com/android/repository/android-ndk-.*-linux.zip' | sed -n 's/.*<a href="\([^"]*\)".*/\1/p')
