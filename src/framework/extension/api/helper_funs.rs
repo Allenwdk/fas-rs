@@ -23,70 +23,34 @@ use log::debug;
 use log::warn;
 
 use crate::cpu_common::{
-    EXTRA_POLICY_MAP, IGNORE_MAP,
+    EXTRA_POLICY_MAP,
     extra_policy::{AbsRangeBound, ExtraPolicy, RelRangeBound},
 };
 
 static WARNING_FLAG: AtomicBool = AtomicBool::new(false);
 
-pub fn remove_extra_policy(policy: i32) {
-    *EXTRA_POLICY_MAP
-        .get()
-        .context("EXTRA_POLICY_MAP not initialized")
-        .unwrap()
-        .get(&policy)
-        .context("CPU Policy not found")
-        .unwrap()
-        .lock() = ExtraPolicy::None;
+/// No-op: GPU调频不再使用extra policy
+pub fn remove_extra_policy(_policy: i32) {
+    let _ = EXTRA_POLICY_MAP.get_or_init(|| ());
 }
 
-pub fn set_extra_policy_abs(policy: i32, min: Option<isize>, max: Option<isize>) {
-    let extra_policy = if min.is_none() && max.is_none() {
-        ExtraPolicy::None
-    } else {
-        ExtraPolicy::AbsRangeBound(AbsRangeBound { min, max })
-    };
-
-    *EXTRA_POLICY_MAP
-        .get()
-        .context("EXTRA_POLICY_MAP not initialized")
-        .unwrap()
-        .get(&policy)
-        .context("CPU Policy not found")
-        .unwrap()
-        .lock() = extra_policy;
-
+/// No-op: GPU调频不再使用extra policy
+pub fn set_extra_policy_abs(_policy: i32, _min: Option<isize>, _max: Option<isize>) {
+    let _ = EXTRA_POLICY_MAP.get_or_init(|| ());
     #[cfg(debug_assertions)]
-    debug!("EXTRA_POLICY_MAP: {:?}", EXTRA_POLICY_MAP.get().unwrap());
+    debug!("EXTRA_POLICY_MAP (no-op): {:?}", EXTRA_POLICY_MAP.get());
 }
 
+/// No-op: GPU调频不再使用extra policy
 pub fn set_extra_policy_rel(
-    policy: i32,
-    target_policy: i32,
-    min: Option<isize>,
-    max: Option<isize>,
+    _policy: i32,
+    _target_policy: i32,
+    _min: Option<isize>,
+    _max: Option<isize>,
 ) {
-    let extra_policy = if min.is_none() && max.is_none() {
-        ExtraPolicy::None
-    } else {
-        ExtraPolicy::RelRangeBound(RelRangeBound {
-            min,
-            max,
-            rel_to: target_policy,
-        })
-    };
-
-    *EXTRA_POLICY_MAP
-        .get()
-        .context("EXTRA_POLICY_MAP not initialized")
-        .unwrap()
-        .get(&policy)
-        .context("CPU Policy not found")
-        .unwrap()
-        .lock() = extra_policy;
-
+    let _ = EXTRA_POLICY_MAP.get_or_init(|| ());
     #[cfg(debug_assertions)]
-    debug!("EXTRA_POLICY_MAP: {:?}", EXTRA_POLICY_MAP.get().unwrap());
+    debug!("EXTRA_POLICY_MAP (no-op): {:?}", EXTRA_POLICY_MAP.get());
 }
 
 pub fn set_policy_freq_offset(_: i32, _: isize) {
@@ -98,12 +62,7 @@ pub fn set_policy_freq_offset(_: i32, _: isize) {
     }
 }
 
-pub fn set_ignore_policy(policy: i32, val: bool) {
-    IGNORE_MAP
-        .get()
-        .unwrap()
-        .get(&policy)
-        .ok_or_else(|| mlua::Error::runtime("Policy Not Found!"))
-        .unwrap()
-        .store(val, Ordering::Release);
+/// No-op: GPU调频不再使用ignore policy
+pub fn set_ignore_policy(_policy: i32, _val: bool) {
+    // GPU busy is global, not per-policy
 }

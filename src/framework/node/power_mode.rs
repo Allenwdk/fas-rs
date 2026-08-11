@@ -42,9 +42,11 @@ impl Display for Mode {
 }
 
 impl Node {
+    /// Get the current power mode.
+    /// Since fas-rs is now independent of external schedulers, this always returns Balance.
+    /// The actual mode is determined by Config::default_mode().
     pub fn get_mode(&mut self) -> Result<Mode> {
-        let mode = self.get_node("mode").or(Err(Error::NodeNotFound))?;
-
-        Mode::from_str(mode.trim())
+        // Mode is now config-driven, return default (Balance) as fallback
+        Ok(Mode::Balance)
     }
 }

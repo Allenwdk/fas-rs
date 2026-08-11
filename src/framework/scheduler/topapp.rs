@@ -57,8 +57,8 @@ impl WindowsInfo {
 
         let mut pids = Vec::new();
         for pkg in packages {
-            let Some(pid) = Self::parse_a16_format(dump, pkg)
-                .or_else(|| Self::parse_a15_format(dump, pkg))
+            let Some(pid) =
+                Self::parse_a16_format(dump, pkg).or_else(|| Self::parse_a15_format(dump, pkg))
             else {
                 continue;
             };

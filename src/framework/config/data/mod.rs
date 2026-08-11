@@ -41,12 +41,52 @@ pub struct Config {
     pub keep_std: bool,
     #[serde(default = "Config::default_value_scene_game_list")]
     pub scene_game_list: bool,
+    #[serde(default = "Config::default_value_mode")]
+    pub default_mode: Mode,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ModeConfig {
-    pub margin_fps: MarginFps,
-    pub core_temp_thresh: TemperatureThreshold,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Mode {
+    Powersave,
+    Balance,
+    Performance,
+    Fast,
+}
+
+impl Default for Mode {
+    fn default() -> Self {
+        Self::Balance
+    }
+}
+
+impl<'de> Deserialize<'de> for Mode {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.to_lowercase().as_str() {
+            "powersave" => Ok(Mode::Powersave),
+            "balance" => Ok(Mode::Balance),
+            "performance" => Ok(Mode::Performance),
+            "fast" => Ok(Mode::Fast),
+            _ => Err(serde::de::Error::custom(format!("Invalid mode: {s}"))),
+        }
+    }
+}
+
+impl Serialize for Mode {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Mode::Powersave => serializer.serialize_str("powersave"),
+            Mode::Balance => serializer.serialize_str("balance"),
+            Mode::Performance => serializer.serialize_str("performance"),
+            Mode::Fast => serializer.serialize_str("fast"),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]

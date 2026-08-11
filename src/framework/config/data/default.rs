@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
-use super::Config;
+use super::{Config, Mode};
 
 impl Config {
     pub const fn default_value_keep_std() -> bool {
@@ -24,5 +24,9 @@ impl Config {
 
     pub const fn default_value_scene_game_list() -> bool {
         true
+    }
+
+    pub const fn default_value_mode() -> Mode {
+        Mode::Balance
     }
 }

@@ -93,6 +93,8 @@ impl Looper {
         extension: Extension,
         controller: Controller,
     ) -> Self {
+        let default_mode = config.default_mode();
+
         Self {
             analyzer_state: AnalyzerState {
                 analyzer,
@@ -106,7 +108,7 @@ impl Looper {
             windows_watcher: TopAppsWatcher::new(),
             cleaner: Cleaner::new(),
             fas_state: FasState {
-                mode: Mode::Balance,
+                mode: default_mode,
                 buffer: None,
                 working_state: State::NotWorking,
                 delay_timer: Instant::now(),
@@ -156,17 +158,18 @@ impl Looper {
     }
 
     fn switch_mode(&mut self) {
-        if let Ok(new_mode) = self.node.get_mode() {
-            if likely(self.fas_state.mode != new_mode) {
-                info!("Switch mode: {} -> {}", self.fas_state.mode, new_mode);
-                self.fas_state.mode = new_mode;
+        // Mode is now config-driven (from games.toml), not from external schedulers
+        let new_mode = self.config.default_mode();
 
-                if self.fas_state.working_state == State::Working {
-                    self.controller_state.controller.init_game(
-                        self.fas_state.buffer.as_ref().unwrap().package_info.pid,
-                        &self.extension,
-                    );
-                }
+        if likely(self.fas_state.mode != new_mode) {
+            info!("Switch mode: {} -> {}", self.fas_state.mode, new_mode);
+            self.fas_state.mode = new_mode;
+
+            if self.fas_state.working_state == State::Working {
+                self.controller_state.controller.init_game(
+                    self.fas_state.buffer.as_ref().unwrap().package_info.pid,
+                    &self.extension,
+                );
             }
         }
     }

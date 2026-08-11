@@ -14,6 +14,8 @@ pub use power_mode::Mode;
 const NODE_PATH: &str = "/dev/fas_rs";
 const REFRESH_TIME: Duration = Duration::from_secs(1);
 
+/// Node structure for fas-rs sysfs-like interface.
+/// Currently not used for mode (mode is now config-driven), but kept for future extensions.
 pub struct Node {
     map: HashMap<String, String>,
     timer: Instant,
@@ -23,15 +25,10 @@ impl Node {
     pub fn init() -> Result<Self> {
         let _ = fs::create_dir(NODE_PATH);
 
-        let mut result = Self {
+        Ok(Self {
             map: HashMap::new(),
             timer: Instant::now(),
-        };
-
-        let _ = result.remove_node("mode");
-        result.create_node("mode", "balance")?;
-
-        Ok(result)
+        })
     }
 
     pub fn create_node<S>(&mut self, i: S, d: S) -> Result<()>
@@ -53,7 +50,7 @@ impl Node {
         let id = i.as_ref();
 
         let path = Path::new(NODE_PATH).join(id);
-        fs::remove_file(path)?;
+        let _ = fs::remove_file(path); // Ignore error (node may not exist)
 
         self.refresh()
     }

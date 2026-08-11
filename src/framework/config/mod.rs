@@ -26,8 +26,8 @@ use inner::Inner;
 use log::{error, info};
 use toml::Value;
 
-use crate::framework::{error::Result, node::Mode};
-pub use data::{ConfigData, MarginFps, ModeConfig, TemperatureThreshold};
+use crate::framework::{error::Result, node::Mode as NodeMode};
+pub use data::{ConfigData, MarginFps, MarginFpsValue, Mode, ModeConfig, TemperatureThreshold};
 use read::wait_and_read;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -69,6 +69,12 @@ impl Config {
         info!("Config watcher started");
 
         Ok(Self { inner })
+    }
+
+    /// Get the default power mode (from config)
+    #[must_use]
+    pub fn default_mode(&mut self) -> Mode {
+        self.inner.config().default_mode
     }
 
     pub fn need_fas<S>(&mut self, pkg: S) -> bool
@@ -125,6 +131,7 @@ impl Config {
         )
     }
 
+    /// Get the ModeConfig for a given power mode
     #[must_use]
     pub fn mode_config(&mut self, m: Mode) -> &ModeConfig {
         match m {
@@ -132,6 +139,17 @@ impl Config {
             Mode::Balance => &self.inner.config().balance,
             Mode::Performance => &self.inner.config().performance,
             Mode::Fast => &self.inner.config().fast,
+        }
+    }
+
+    /// Convert Mode (config) to NodeMode (for compatibility)
+    #[must_use]
+    pub fn to_node_mode(m: Mode) -> NodeMode {
+        match m {
+            Mode::Powersave => NodeMode::Powersave,
+            Mode::Balance => NodeMode::Balance,
+            Mode::Performance => NodeMode::Performance,
+            Mode::Fast => NodeMode::Fast,
         }
     }
 }
