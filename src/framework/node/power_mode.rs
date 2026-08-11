@@ -1,9 +1,10 @@
 use super::Node;
+use crate::framework::{config::Mode, error::Result};
 
 // Mode is defined in crate::framework::config::data::Mode.
 // This module exists only for backwards compatibility with existing code that
 // imports `node::Mode`. Re-export it here so nothing breaks.
-pub use crate::framework::config::data::Mode;
+pub use crate::framework::config::Mode;
 
 impl Node {
     /// Get the current power mode.

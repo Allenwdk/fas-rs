@@ -74,7 +74,7 @@ impl Config {
     /// Get the default power mode (from config)
     #[must_use]
     pub fn default_mode(&mut self) -> Mode {
-        self.inner.config().default_mode
+        self.inner.config().config.default_mode
     }
 
     pub fn need_fas<S>(&mut self, pkg: S) -> bool

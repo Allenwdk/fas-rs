@@ -21,7 +21,7 @@ mod process_monitor;
 
 use std::{sync::OnceLock, thread, time::Duration};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 #[cfg(debug_assertions)]
 use log::debug;
 use log::warn;
