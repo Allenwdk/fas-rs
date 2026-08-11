@@ -1,5 +1,4 @@
 use super::Node;
-use crate::framework::{config::Mode, error::Result};
 
 // Mode is defined in crate::framework::config::data::Mode.
 // This module exists only for backwards compatibility with existing code that
@@ -10,7 +9,7 @@ impl Node {
     /// Get the current power mode.
     /// Since fas-rs is now independent of external schedulers, this always returns Balance.
     /// The actual mode is determined by Config::default_mode().
-    pub fn get_mode(&mut self) -> Result<Mode> {
+    pub fn get_mode(&mut self) -> crate::framework::error::Result<Mode> {
         Ok(Mode::Balance)
     }
 }
