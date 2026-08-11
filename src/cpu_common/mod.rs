@@ -21,11 +21,10 @@ mod process_monitor;
 
 use std::{sync::OnceLock, thread, time::Duration};
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 #[cfg(debug_assertions)]
 use log::debug;
 use log::warn;
-use parking_lot::Mutex;
 use process_monitor::ProcessMonitor;
 
 use crate::{
@@ -33,7 +32,6 @@ use crate::{
     api::{trigger_init_cpu_freq, trigger_reset_cpu_freq},
     file_handler::FileHandler,
 };
-use extra_policy::ExtraPolicy;
 use gpu_info::GpuInfo;
 
 pub static EXTRA_POLICY_MAP: OnceLock<()> = OnceLock::new();

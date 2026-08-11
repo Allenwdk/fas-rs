@@ -27,7 +27,7 @@ use log::{error, info};
 use toml::Value;
 
 use crate::framework::{error::Result, node::Mode as NodeMode};
-pub use data::{ConfigData, MarginFps, MarginFpsValue, Mode, ModeConfig, TemperatureThreshold};
+pub use data::{ConfigData, MarginFps, Mode, ModeConfig, TemperatureThreshold};
 use read::wait_and_read;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

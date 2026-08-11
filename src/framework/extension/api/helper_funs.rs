@@ -17,15 +17,11 @@
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use anyhow::Context;
 #[cfg(debug_assertions)]
 use log::debug;
 use log::warn;
 
-use crate::cpu_common::{
-    EXTRA_POLICY_MAP,
-    extra_policy::{AbsRangeBound, ExtraPolicy, RelRangeBound},
-};
+use crate::cpu_common::EXTRA_POLICY_MAP;
 
 static WARNING_FLAG: AtomicBool = AtomicBool::new(false);
 

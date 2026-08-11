@@ -38,11 +38,11 @@ pub fn calculate_control(
 
     let target_fps = f64::from(buffer.target_fps_state.target_fps?);
     let margin_fps: f64 = match &config.mode_config(mode).margin_fps {
-        MarginFps::BaseOnly(base) => target_fps / 60.0 * f64::from(*base),
+        MarginFps::BaseOnly(base) => target_fps / 60.0 * f64::from(base),
         MarginFps::Advanced { base, overrides } => overrides
             .get(&target_fps.to_string())
             .copied()
-            .map_or_else(|| target_fps / 60.0 * f64::from(*base), f64::from),
+            .map_or_else(|| target_fps / 60.0 * f64::from(base), f64::from),
     };
 
     assert!(margin_fps.is_sign_positive(), "margin_fps must be positive");

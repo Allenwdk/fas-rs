@@ -89,12 +89,30 @@ impl Serialize for Mode {
     }
 }
 
+impl std::fmt::Display for Mode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Mode::Powersave => "powersave",
+            Mode::Balance => "balance",
+            Mode::Performance => "performance",
+            Mode::Fast => "fast",
+        };
+        write!(f, "{s}")
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum TemperatureThreshold {
     #[serde(rename = "disabled")]
     Disabled,
     #[serde(untagged)]
     Temp(u64),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ModeConfig {
+    pub margin_fps: MarginFps,
+    pub core_temp_thresh: TemperatureThreshold,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
