@@ -12,7 +12,7 @@
 // FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
 // details.
 //
-// You should have received a copy of the General Public License along
+// You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
 use std::{
@@ -27,34 +27,33 @@ use crate::file_handler::FileHandler;
 
 #[derive(Debug)]
 pub struct GpuInfo {
-    pub path: PathBuf,
-    /// Sorted list of all available GPU frequencies (Hz)
+    /// Sorted available frequencies in Hz (descending: level 0 = highest freq)
+    /// Index i corresponds to power level i.
     pub freqs: Vec<isize>,
     /// Last frequency set by FAS (in Hz)
-    pub cur_fas_freq: isize,
+    cur_fas_freq: isize,
     verify_freq: Option<isize>,
     verify_timer: Instant,
 }
 
 impl GpuInfo {
     pub fn new() -> Result<Self> {
-        let path = PathBuf::from("/sys/class/kgsl/kgsl-3d0/devfreq");
-
-        // Read available frequencies
-        let freqs_content = fs::read_to_string(path.join("scaling_available_frequencies"))
-            .context("Failed to read scaling_available_frequencies")?;
+        // Read available frequencies from gpu_available_frequencies
+        let freqs_content =
+            fs::read_to_string("/sys/class/kgsl/kgsl-3d0/gpu_available_frequencies")
+                .context("Failed to read gpu_available_frequencies")?;
 
         let mut freqs: Vec<isize> = freqs_content
             .split_whitespace()
             .map(|f| f.parse::<isize>().context("Failed to parse frequency"))
             .collect::<Result<_>>()?;
 
-        freqs.sort_unstable();
+        // Sort descending so index 0 = highest frequency = power level 0
+        freqs.sort_unstable_by(|a, b| b.cmp(a));
 
-        let max_freq = *freqs.last().context("No frequencies available")?;
+        let max_freq = *freqs.first().context("No frequencies available")?;
 
         Ok(Self {
-            path,
             freqs,
             cur_fas_freq: max_freq,
             verify_freq: None,
@@ -68,6 +67,7 @@ impl GpuInfo {
 
             if let Some(verify_freq) = self.verify_freq {
                 let current_freq = self.read_freq();
+                // Find the closest available frequency bounds
                 let min_acceptable_freq = self
                     .freqs
                     .iter()
@@ -96,38 +96,50 @@ impl GpuInfo {
         self.verify_freq = Some(write_freq);
     }
 
-    /// Write frequency to max_freq (clamp to available range)
+    /// Convert a target frequency (Hz) to the corresponding power level.
+    /// Power levels are inversely mapped: level 0 = highest freq, higher level = lower freq.
+    /// Returns the power level index for the highest available frequency <= target_freq.
+    fn freq_to_pwrlevel(&self, target_freq: isize) -> usize {
+        // Find the first frequency that is <= target_freq (since sorted descending)
+        self.freqs
+            .iter()
+            .position(|&f| f <= target_freq)
+            .unwrap_or(self.freqs.len() - 1)
+    }
+
+    /// Write frequency by setting max_pwrlevel to the level corresponding to target freq.
     pub fn write_freq(&mut self, freq: isize, file_handler: &mut FileHandler) -> Result<()> {
-        let min_freq = *self.freqs.first().context("No frequencies available")?;
-        let max_freq = *self.freqs.last().context("No frequencies available")?;
+        let min_freq = *self.freqs.last().context("No frequencies available")?;
+        let max_freq = *self.freqs.first().context("No frequencies available")?;
 
         let adjusted_freq = freq.clamp(min_freq, max_freq);
         self.cur_fas_freq = adjusted_freq;
 
         self.verify_freq(adjusted_freq);
 
-        file_handler.write_with_workround(self.max_freq_path(), &adjusted_freq.to_string())
+        // Find the power level for this frequency and write to both min/max_pwrlevel
+        let pwrlevel = self.freq_to_pwrlevel(adjusted_freq).to_string();
+        file_handler.write_with_workround("/sys/class/kgsl/kgsl-3d0/max_pwrlevel", &pwrlevel)?;
+        file_handler.write_with_workround("/sys/class/kgsl/kgsl-3d0/min_pwrlevel", &pwrlevel)
     }
 
-    /// Reset to full available frequency range
+    /// Reset to full available frequency range (level 0 = highest freq).
     pub fn reset(&mut self, file_handler: &mut FileHandler) -> Result<()> {
-        let min_freq = *self.freqs.first().context("No frequencies available")?;
-        let max_freq = *self.freqs.last().context("No frequencies available")?;
-
         self.verify_freq = None;
 
-        file_handler.write_with_workround(self.max_freq_path(), &max_freq.to_string())?;
-        file_handler.write_with_workround(self.min_freq_path(), &min_freq.to_string())
+        // Level 0 = highest frequency
+        file_handler.write_with_workround("/sys/class/kgsl/kgsl-3d0/max_pwrlevel", "0")?;
+        file_handler.write_with_workround("/sys/class/kgsl/kgsl-3d0/min_pwrlevel", "0")
     }
 
-    /// Read current GPU frequency from sysfs
+    /// Read current GPU frequency from sysfs (gpuclk).
     pub fn read_freq(&self) -> isize {
-        fs::read_to_string(self.path.join("scaling_cur_freq"))
-            .context("Failed to read scaling_cur_freq")
+        fs::read_to_string("/sys/class/kgsl/kgsl-3d0/gpuclk")
+            .context("Failed to read gpuclk")
             .unwrap()
             .trim()
             .parse::<isize>()
-            .context("Failed to parse scaling_cur_freq")
+            .context("Failed to parse gpuclk")
             .unwrap()
     }
 
@@ -146,13 +158,5 @@ impl GpuInfo {
             .and_then(|s| s.parse::<f64>().ok())
             .map(|v| v / 100.0)
             .unwrap_or(0.0)
-    }
-
-    fn max_freq_path(&self) -> PathBuf {
-        self.path.join("max_freq")
-    }
-
-    fn min_freq_path(&self) -> PathBuf {
-        self.path.join("min_freq")
     }
 }

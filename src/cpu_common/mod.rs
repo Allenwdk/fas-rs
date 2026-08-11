@@ -36,6 +36,16 @@ use gpu_info::GpuInfo;
 
 pub static EXTRA_POLICY_MAP: OnceLock<()> = OnceLock::new();
 
+/// Ensure GPU powerlevel files are writable before use.
+fn ensure_gpu_writable() {
+    let _ = std::process::Command::new("chmod")
+        .args(["777", "/sys/class/kgsl/kgsl-3d0/min_pwrlevel"])
+        .output();
+    let _ = std::process::Command::new("chmod")
+        .args(["777", "/sys/class/kgsl/kgsl-3d0/max_pwrlevel"])
+        .output();
+}
+
 #[derive(Debug)]
 pub struct Controller {
     max_freq: isize,
@@ -47,12 +57,17 @@ pub struct Controller {
 
 impl Controller {
     pub fn new() -> Result<Self> {
+        ensure_gpu_writable();
         let gpu_info = Self::load_gpu_info()?;
 
         #[cfg(debug_assertions)]
-        debug!("gpu info: max_freq={}", gpu_info.freqs.last().unwrap_or(&0));
+        debug!(
+            "gpu info: max_freq={}",
+            gpu_info.freqs.first().unwrap_or(&0)
+        );
 
-        let max_freq = *gpu_info.freqs.last().context("No frequencies available")?;
+        // Index 0 = highest frequency (power level 0)
+        let max_freq = *gpu_info.freqs.first().context("No frequencies available")?;
 
         Ok(Self {
             max_freq,
