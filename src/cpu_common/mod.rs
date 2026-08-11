@@ -109,7 +109,16 @@ impl Controller {
         #[cfg(debug_assertions)]
         debug!("change freq: {control}");
 
-        let target_freq = self.compute_target_frequency(control, is_janked);
+        // Clamp control to prevent runaway accumulation from the PID controller.
+        // Without this, a persistent frametime error (e.g. target 30fps vs actual 20fps)
+        // causes control to grow indefinitely each frame → pushes to max_freq then drops to min_freq.
+        const MAX_CONTROL_DELTA: isize = 1_000_000_000; // ±1 GHz per frame
+        let clamped_control = control.clamp(-MAX_CONTROL_DELTA, MAX_CONTROL_DELTA);
+
+        let target_freq = self.compute_target_frequency(clamped_control, is_janked);
+        // Floor: never go below 25% of max available frequency
+        let min_floor = (self.max_freq / 4).max(160_000_000); // at least 160 MHz
+        let target_freq = target_freq.clamp(min_floor, self.max_freq);
         let _ = self
             .gpu_info
             .write_freq(target_freq, &mut self.file_handler);
