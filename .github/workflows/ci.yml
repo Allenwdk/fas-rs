@@ -18,9 +18,9 @@
 name: ci-build
 on:
   push:
-    branches: ["master"]
+    branches: ["master", "feas"]
   pull_request:
-    branches: ["master"]
+    branches: ["master", "feas"]
 env:
   CARGO_TERM_COLOR: always
 jobs:
