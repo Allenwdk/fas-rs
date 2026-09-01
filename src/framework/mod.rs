@@ -15,13 +15,13 @@
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
-mod config;
+pub mod config;
 mod error;
 mod extension;
 mod node;
 mod pid_utils;
 pub mod prelude;
-mod scheduler;
+pub mod scheduler;
 
 #[allow(unused_imports)]
 pub use config::Config;

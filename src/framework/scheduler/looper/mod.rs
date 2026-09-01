@@ -17,7 +17,7 @@
 
 mod buffer;
 mod clean;
-mod policy;
+pub mod policy;
 
 use std::time::{Duration, Instant};
 
@@ -26,7 +26,11 @@ use likely_stable::{likely, unlikely};
 #[cfg(debug_assertions)]
 use log::debug;
 use log::info;
-use policy::{ControllerParams, controll::calculate_control};
+use policy::{
+    ControllerParams,
+    controll::calculate_control,
+    feas::{FeasContext, FeasState, calculate_decision},
+};
 
 use super::{FasData, thermal::Thermal, topapp::TopAppsWatcher};
 use crate::{
@@ -71,6 +75,7 @@ struct ControllerState {
     params: ControllerParams,
     target_fps_offset: f64,
     usage_sample_timer: Instant,
+    feas: FeasState,
 }
 
 pub struct Looper {
@@ -116,6 +121,7 @@ impl Looper {
                 params: ControllerParams::default(),
                 target_fps_offset: 0.0,
                 usage_sample_timer: Instant::now(),
+                feas: FeasState::default(),
             },
         }
     }
@@ -208,7 +214,41 @@ impl Looper {
             return;
         }
 
-        let (control, is_janked) = if let Some(buffer) = &self.fas_state.buffer {
+        let Some(buffer) = &self.fas_state.buffer else {
+            return;
+        };
+
+        // FEAS 模式：xiaomifeas 风格多级救援/预测/降频/三级释放
+        if self.config.feas_enable() {
+            let feas_params = self.config.feas_params(self.fas_state.mode);
+
+            // 有效帧时长：max(最近帧, 兜底间隔)，clamp 到 feas_max_frame_us 防巨型帧污染窗口
+            let frame_us = {
+                let last = buffer
+                    .frametime_state
+                    .frametimes
+                    .front()
+                    .copied()
+                    .unwrap_or_default();
+                let eff = last.max(buffer.frametime_state.additional_frametime);
+                (eff.as_micros() as u64).min(feas_params.max_frame_us)
+            };
+
+            let ctx = FeasContext {
+                frame_us,
+                fps: buffer.target_fps_state.target_fps.unwrap_or(60),
+                max_level: self.controller_state.controller.max_freq_level(),
+                now: Instant::now(),
+            };
+
+            let decision = calculate_decision(&mut self.controller_state.feas, &ctx, &feas_params);
+            self.controller_state
+                .controller
+                .fas_update_freq_feas(&decision, &feas_params);
+            return;
+        }
+
+        let (control, is_janked) = {
             let target_fps_offset = self
                 .therminal
                 .target_fps_offset(&mut self.config, self.fas_state.mode);
@@ -220,8 +260,6 @@ impl Looper {
                 target_fps_offset,
             )
             .unwrap_or_default()
-        } else {
-            return;
         };
 
         #[cfg(debug_assertions)]

@@ -1,6 +1,25 @@
 [config]
 keep_std = true
 scene_game_list = true
+feas_enable = true
+feas_jank_thres_us = 700
+feas_rescue_perf = true
+feas_rescue_step_us = 750
+feas_predict_thres_us = 380
+feas_predict_perf = false
+feas_predict_step_us = 750
+feas_keepdown_thres_us = -50
+feas_keepdown_cooldown = 3
+feas_nor_keep = 12
+feas_jank_keep = 25
+feas_cons_no_jank = 10
+feas_hold_timeout_ms = {144 = 9100, 120 = 13000, 90 = 16600, 60 = 25000, 49 = 27000, 30 = 44000}
+feas_release_floor_ms = 2333
+feas_floor_freq = 384000
+feas_release_floor_freq = 384000
+feas_max_level = 0
+feas_step = 1
+feas_max_frame_us = 100000
 
 [game_list]
 "com.hypergryph.arknights" = [30, 60]
@@ -18,15 +37,19 @@ scene_game_list = true
 [powersave]
 margin_fps = 3.0
 core_temp_thresh = 80000
+feas_force_boost = false
 
 [balance]
 margin_fps = 1.0
 core_temp_thresh = 90000
+feas_force_boost = false
 
 [performance]
 margin_fps = 0.3
 core_temp_thresh = 95000
+feas_force_boost = true
 
 [fast]
 margin_fps = 0
 core_temp_thresh = 95000
+feas_force_boost = true

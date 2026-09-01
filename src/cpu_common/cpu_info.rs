@@ -160,6 +160,41 @@ impl Info {
         Ok(())
     }
 
+    /// 支持 ceiling≠floor 的写频（FEAS 三级释放阶段使用）。
+    ///
+    /// - `ceiling_freq`：scaling_max_freq 目标值
+    /// - `floor_freq`：scaling_min_freq 目标值
+    /// - 对 critical policy 的 Force 模式：min=max=ceiling_freq（锁死）
+    pub fn write_freq_range(
+        &mut self,
+        top_used_cores: CpuSet,
+        ceiling_freq: isize,
+        floor_freq: isize,
+        force_boost: bool,
+        file_handler: &mut FileHandler,
+    ) -> Result<()> {
+        let min_freq = *self.freqs.first().context("No frequencies available")?;
+        let max_freq = *self.freqs.last().context("No frequencies available")?;
+
+        let adjusted_ceiling = ceiling_freq.clamp(min_freq, max_freq);
+        let adjusted_floor = if force_boost && self.critical_policy(top_used_cores) {
+            adjusted_ceiling
+        } else {
+            floor_freq.clamp(min_freq, max_freq)
+        };
+        self.cur_fas_freq = adjusted_ceiling;
+
+        if !self.ignore_write()? {
+            self.verify_freq(adjusted_ceiling);
+            let ceiling_s = adjusted_ceiling.to_string();
+            let floor_s = adjusted_floor.to_string();
+            file_handler.write_with_workround(self.max_freq_path(), &ceiling_s)?;
+            file_handler.write_with_workround(self.min_freq_path(), &floor_s)?;
+        }
+
+        Ok(())
+    }
+
     pub fn reset(&mut self, file_handler: &mut FileHandler) -> Result<()> {
         let min_freq = self
             .freqs

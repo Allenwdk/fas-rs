@@ -16,6 +16,7 @@
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
 mod data;
+mod feas;
 mod inner;
 mod merge;
 mod read;
@@ -28,6 +29,7 @@ use toml::Value;
 
 use crate::framework::{error::Result, node::Mode};
 pub use data::{ConfigData, MarginFps, ModeConfig, TemperatureThreshold};
+pub use feas::FeasParams;
 use read::wait_and_read;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -133,5 +135,17 @@ impl Config {
             Mode::Performance => &self.inner.config().performance,
             Mode::Fast => &self.inner.config().fast,
         }
+    }
+
+    /// 构造当前模式的 FEAS 策略参数（mode 的 force_boost + 全局阈值）。
+    pub fn feas_params(&mut self, m: Mode) -> FeasParams {
+        let mode = self.mode_config(m).clone();
+        let data = self.inner.config();
+        FeasParams::from_mode(&mode, data)
+    }
+
+    /// FEAS 主开关（默认开启；false 回退 legacy P-Controller）。
+    pub fn feas_enable(&mut self) -> bool {
+        self.inner.config().config.feas_enable
     }
 }

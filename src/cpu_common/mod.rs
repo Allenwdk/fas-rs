@@ -43,6 +43,7 @@ use crate::{
     Extension,
     api::{trigger_init_cpu_freq, trigger_reset_cpu_freq},
     file_handler::FileHandler,
+    framework::scheduler::looper::policy::feas::{FeasDecision, ReleaseStage, freq_for_level},
 };
 use cpu_info::Info;
 use extra_policy::ExtraPolicy;
@@ -189,6 +190,85 @@ impl Controller {
                     let _ = cpu.write_freq(top_used_cores, freq, &mut self.file_handler);
                 }
             }
+        }
+    }
+
+    /// FEAS 写频：按释放阶段决定每 policy 的 (ceiling, floor)。
+    ///
+    /// - `Limit`（提频）：ceiling = `freq_for_level(level)`；`force_boost` 时 min=max=ceiling，
+    ///   否则 floor = `feas_params.floor_freq`（0=最低频）
+    /// - `Floor`/`FloorHigh`（释放天花板、留地板）：ceiling=最高频，floor=`release_floor_freq`
+    /// - `Released`：`reset_all_cpu_freq()` 完全释放
+    pub fn fas_update_freq_feas(
+        &mut self,
+        decision: &FeasDecision,
+        feas_params: &crate::framework::config::FeasParams,
+    ) {
+        #[cfg(debug_assertions)]
+        debug!(
+            "feas: level {} stage {:?} janked {}",
+            decision.freq_level, decision.stage, decision.is_janked
+        );
+
+        if decision.stage == ReleaseStage::Released {
+            self.reset_all_cpu_freq();
+            return;
+        }
+
+        let top_used_cores = self.top_used_cores().unwrap_or_else(|| {
+            let mut all_cores = CpuSet::new();
+            for core in 0..num_cpus::get() {
+                all_cores.set(core).unwrap();
+            }
+            all_cores
+        });
+
+        let step = feas_params.step.max(1);
+        let force_boost = feas_params.force_boost;
+
+        for cpu in &mut self.cpu_infos {
+            // 最高频 / 最低频（各自簇 freq 表）
+            let max_freq = cpu.freqs.last().copied().unwrap_or(0);
+            let min_freq = cpu.freqs.first().copied().unwrap_or(0);
+
+            // Limit：ceiling = 档位频率（提频）；Floor/FloorHigh：ceiling = 最高频（释放）
+            let ceiling = match decision.stage {
+                ReleaseStage::Limit => freq_for_level(&cpu.freqs, decision.freq_level, step),
+                ReleaseStage::Floor | ReleaseStage::FloorHigh => max_freq,
+                ReleaseStage::Released => min_freq, // unreachable（已提前返回）
+            };
+
+            let floor = match decision.stage {
+                ReleaseStage::Limit => {
+                    if force_boost {
+                        ceiling
+                    } else {
+                        let f = feas_params.floor_freq;
+                        if f <= 0 {
+                            min_freq
+                        } else {
+                            f
+                        }
+                    }
+                }
+                ReleaseStage::Floor | ReleaseStage::FloorHigh => {
+                    let f = feas_params.release_floor_freq;
+                    if f <= 0 {
+                        min_freq
+                    } else {
+                        f
+                    }
+                }
+                ReleaseStage::Released => min_freq,
+            };
+
+            let _ = cpu.write_freq_range(
+                top_used_cores,
+                ceiling,
+                floor,
+                force_boost,
+                &mut self.file_handler,
+            );
         }
     }
 
@@ -419,6 +499,16 @@ impl Controller {
 
     pub fn util_max(&self) -> f64 {
         self.util_max.unwrap_or_default()
+    }
+
+    /// 设备可用档位上限（最大频点数-1，取各 policy 最小值保证全部有效）。
+    pub fn max_freq_level(&self) -> i32 {
+        self.cpu_infos
+            .iter()
+            .map(|cpu| cpu.freqs.len() as i32)
+            .min()
+            .unwrap_or(1)
+            .saturating_sub(1)
     }
 }
 

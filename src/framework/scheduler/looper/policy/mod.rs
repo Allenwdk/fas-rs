@@ -16,6 +16,7 @@
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
 pub mod controll;
+pub mod feas;
 
 #[derive(Debug, Copy, Clone)]
 pub struct ControllerParams {

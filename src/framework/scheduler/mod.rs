@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
-mod looper;
+pub mod looper;
 mod thermal;
 mod topapp;
 

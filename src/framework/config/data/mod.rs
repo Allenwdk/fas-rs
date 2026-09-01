@@ -35,18 +35,58 @@ pub struct ConfigData {
 }
 
 #[allow(clippy::struct_excessive_bools)]
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     #[serde(default = "Config::default_value_keep_std")]
     pub keep_std: bool,
     #[serde(default = "Config::default_value_scene_game_list")]
     pub scene_game_list: bool,
+    #[serde(default = "Config::default_value_feas_enable")]
+    pub feas_enable: bool,
+    #[serde(default = "Config::default_value_feas_jank_thres_us")]
+    pub feas_jank_thres_us: i32,
+    #[serde(default = "Config::default_value_feas_rescue_perf")]
+    pub feas_rescue_perf: bool,
+    #[serde(default = "Config::default_value_feas_rescue_step_us")]
+    pub feas_rescue_step_us: i32,
+    #[serde(default = "Config::default_value_feas_predict_thres_us")]
+    pub feas_predict_thres_us: i32,
+    #[serde(default = "Config::default_value_feas_predict_perf")]
+    pub feas_predict_perf: bool,
+    #[serde(default = "Config::default_value_feas_predict_step_us")]
+    pub feas_predict_step_us: i32,
+    #[serde(default = "Config::default_value_feas_keepdown_thres_us")]
+    pub feas_keepdown_thres_us: i32,
+    #[serde(default = "Config::default_value_feas_keepdown_cooldown")]
+    pub feas_keepdown_cooldown: i32,
+    #[serde(default = "Config::default_value_feas_nor_keep")]
+    pub feas_nor_keep: i32,
+    #[serde(default = "Config::default_value_feas_jank_keep")]
+    pub feas_jank_keep: i32,
+    #[serde(default = "Config::default_value_feas_cons_no_jank")]
+    pub feas_cons_no_jank: i32,
+    #[serde(default = "Config::default_value_feas_hold_timeout_ms")]
+    pub feas_hold_timeout_ms: HashMap<u32, u32>,
+    #[serde(default = "Config::default_value_feas_release_floor_ms")]
+    pub feas_release_floor_ms: u32,
+    #[serde(default = "Config::default_value_feas_floor_freq")]
+    pub feas_floor_freq: isize,
+    #[serde(default = "Config::default_value_feas_release_floor_freq")]
+    pub feas_release_floor_freq: isize,
+    #[serde(default = "Config::default_value_feas_max_level")]
+    pub feas_max_level: i32,
+    #[serde(default = "Config::default_value_feas_step")]
+    pub feas_step: usize,
+    #[serde(default = "Config::default_value_feas_max_frame_us")]
+    pub feas_max_frame_us: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModeConfig {
     pub margin_fps: MarginFps,
     pub core_temp_thresh: TemperatureThreshold,
+    #[serde(default = "ModeConfig::default_value_feas_force_boost")]
+    pub feas_force_boost: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
