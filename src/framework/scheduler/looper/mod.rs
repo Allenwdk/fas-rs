@@ -68,6 +68,7 @@ struct AnalyzerState {
     analyzer: Analyzer,
     restart_counter: u8,
     restart_timer: Instant,
+    update_timer: Instant,
 }
 
 struct ControllerState {
@@ -103,6 +104,7 @@ impl Looper {
                 analyzer,
                 restart_counter: 0,
                 restart_timer: Instant::now(),
+                update_timer: Instant::now() - Duration::from_secs(1),
             },
             config,
             node,
@@ -129,8 +131,11 @@ impl Looper {
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
             self.switch_mode();
-            if let Err(error) = self.update_analyzer() {
-                warn!("failed to update frame analyzer: {error}");
+            if self.analyzer_state.update_timer.elapsed() >= Duration::from_secs(1) {
+                self.analyzer_state.update_timer = Instant::now();
+                if let Err(error) = self.update_analyzer() {
+                    warn!("failed to update frame analyzer: {error}");
+                }
             }
             self.retain_topapp();
 
@@ -197,7 +202,7 @@ impl Looper {
             };
             if self.config.need_fas(&pkg) {
                 let thread_names = if pkg == "com.kurogame.mingchao" {
-                    &["RHIThread", "RenderThread", "RenderThread 1"][..]
+                    &["RHIThread"][..]
                 } else {
                     &[]
                 };
