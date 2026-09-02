@@ -39,6 +39,8 @@ pub enum AnalyzerError {
         attempted: String,
         error: String,
     },
+    #[error("thread {name} was not found in process {pid}")]
+    ThreadNotFound { pid: i32, name: String },
     #[error("Application not found")]
     AppNotFound,
     #[error("Map error")]

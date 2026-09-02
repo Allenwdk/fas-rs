@@ -39,7 +39,7 @@ impl Drop for UprobeHandler {
 }
 
 impl UprobeHandler {
-    pub fn attach_app(pid: i32) -> Result<Self> {
+    pub fn attach_app(pid: i32, thread_name: Option<&str>) -> Result<Self> {
         const LIBGUI: &str = "/system/lib64/libgui.so";
         const SYMBOLS: &[&str] = &[
             "_ZN7android7Surface16hook_queueBufferEP13ANativeWindowP19ANativeWindowBufferi",
@@ -52,9 +52,24 @@ impl UprobeHandler {
 
         let tids = fs::read_dir(format!("/proc/{pid}/task"))?
             .filter_map(|entry| entry.ok())
-            .filter_map(|entry| entry.file_name().to_str()?.parse::<i32>().ok())
+            .filter_map(|entry| {
+                let tid = entry.file_name().to_str()?.parse::<i32>().ok()?;
+                if let Some(thread_name) = thread_name {
+                    let name = fs::read_to_string(entry.path().join("comm")).ok()?;
+                    if name.trim() != thread_name {
+                        return None;
+                    }
+                }
+                Some(tid)
+            })
             .collect::<Vec<_>>();
         if tids.is_empty() {
+            if let Some(thread_name) = thread_name {
+                return Err(AnalyzerError::ThreadNotFound {
+                    pid,
+                    name: thread_name.into(),
+                });
+            }
             return Err(AnalyzerError::AttachError {
                 pid,
                 attempted: SYMBOLS.join(", "),
