@@ -16,9 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+use std::fs;
+
 use aya::{
     Ebpf,
-    maps::{Array, MapData, RingBuf},
+    maps::{MapData, RingBuf},
     programs::UProbe,
 };
 
@@ -48,20 +50,34 @@ impl UprobeHandler {
             "_ZN7android7Surface11queueBufferEP19ANativeWindowBufferiPNS_24SurfaceQueueBufferOutputE",
         ];
 
+        let tids = fs::read_dir(format!("/proc/{pid}/task"))?
+            .filter_map(|entry| entry.ok())
+            .filter_map(|entry| entry.file_name().to_str()?.parse::<i32>().ok())
+            .collect::<Vec<_>>();
+        if tids.is_empty() {
+            return Err(AnalyzerError::AttachError {
+                pid,
+                attempted: SYMBOLS.join(", "),
+                error: "target process has no threads".into(),
+            });
+        }
+
         let mut bpf = load_bpf()?;
-        let mut target_tgid: Array<_, u32> = Array::try_from(bpf.map_mut("TARGET_TGID").unwrap())?;
-        target_tgid.set(0, pid as u32, 0)?;
         let program: &mut UProbe = bpf.program_mut("frame_analyzer_ebpf").unwrap().try_into()?;
         program.load()?;
 
         let mut last_error = None;
         for symbol in SYMBOLS {
-            match program.attach(Some(symbol), 0, LIBGUI, None) {
-                Ok(_) => {
-                    log::info!("attached queueBuffer uprobe for pid {pid} using {symbol}");
-                    return Ok(Self { bpf });
+            let mut attached = 0;
+            for tid in &tids {
+                match program.attach(Some(symbol), 0, LIBGUI, Some(*tid)) {
+                    Ok(_) => attached += 1,
+                    Err(error) => last_error = Some(error),
                 }
-                Err(error) => last_error = Some(error),
+            }
+            if attached > 0 {
+                log::info!("attached queueBuffer uprobe for pid {pid} using {symbol} to {attached}/{} threads", tids.len());
+                return Ok(Self { bpf });
             }
         }
 
