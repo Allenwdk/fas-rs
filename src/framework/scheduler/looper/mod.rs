@@ -25,7 +25,7 @@ use frame_analyzer::Analyzer;
 use likely_stable::{likely, unlikely};
 #[cfg(debug_assertions)]
 use log::debug;
-use log::info;
+use log::{info, warn};
 use policy::{
     ControllerParams,
     controll::calculate_control,
@@ -129,7 +129,9 @@ impl Looper {
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
             self.switch_mode();
-            let _ = self.update_analyzer();
+            if let Err(error) = self.update_analyzer() {
+                warn!("failed to update frame analyzer: {error}");
+            }
             self.retain_topapp();
 
             if self.windows_watcher.visible_freeform_window() {
@@ -186,9 +188,17 @@ impl Looper {
 
     fn update_analyzer(&mut self) -> Result<()> {
         for pid in self.windows_watcher.topapp_pids().iter().copied() {
-            let pkg = get_process_name(pid)?;
+            let pkg = match get_process_name(pid) {
+                Ok(pkg) => pkg,
+                Err(error) => {
+                    warn!("failed to resolve top-app package for pid {pid}: {error}");
+                    continue;
+                }
+            };
             if self.config.need_fas(&pkg) {
-                self.analyzer_state.analyzer.attach_app(pid)?;
+                if let Err(error) = self.analyzer_state.analyzer.attach_app(pid) {
+                    warn!("failed to attach frame analyzer for pid {pid} ({pkg}): {error}");
+                }
             }
         }
         Ok(())
@@ -200,7 +210,9 @@ impl Looper {
                 self.analyzer_state.restart_timer = Instant::now();
                 self.analyzer_state.restart_counter = 0;
                 self.analyzer_state.analyzer.detach_apps();
-                let _ = self.update_analyzer();
+                if let Err(error) = self.update_analyzer() {
+                    warn!("failed to restart frame analyzer: {error}");
+                }
             }
         } else {
             self.analyzer_state.restart_counter += 1;

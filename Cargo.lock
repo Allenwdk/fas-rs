@@ -769,8 +769,6 @@ checksum = "d9c4f5dac5e15c24eb999c26181a6ca40b39fe946cbe4c263c7209467bc83af2"
 [[package]]
 name = "frame-analyzer"
 version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecf8b73c073dc52621b2026b06d712df02eb17de48a1f7aa85273dd4ec464744"
 dependencies = [
  "anyhow",
  "aya 0.13.1",
@@ -778,6 +776,7 @@ dependencies = [
  "ctrlc",
  "frame-analyzer-ebpf-common",
  "libc",
+ "log",
  "mio",
  "thiserror 2.0.18",
 ]
@@ -785,8 +784,6 @@ dependencies = [
 [[package]]
 name = "frame-analyzer-ebpf-common"
 version = "0.2.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "603d864e46a2ef8c86313d98faa59a73060e5bfcae59d138a80fd8adedb0a854"
 dependencies = [
  "aya 0.12.0",
 ]
