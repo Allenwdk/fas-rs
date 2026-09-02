@@ -196,11 +196,15 @@ impl Looper {
                 }
             };
             if self.config.need_fas(&pkg) {
-                let thread_name = (pkg == "com.kurogame.mingchao").then_some("RHIThread");
+                let thread_names = if pkg == "com.kurogame.mingchao" {
+                    &["RHIThread", "RenderThread", "RenderThread 1"][..]
+                } else {
+                    &[]
+                };
                 if let Err(error) = self
                     .analyzer_state
                     .analyzer
-                    .attach_app_thread(pid, thread_name)
+                    .attach_app_threads(pid, thread_names)
                 {
                     warn!("failed to attach frame analyzer for pid {pid} ({pkg}): {error}");
                 }

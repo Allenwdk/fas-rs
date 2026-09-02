@@ -190,11 +190,20 @@ impl Analyzer {
 
     /// Attach the analyzer to a named thread of the target application.
     pub fn attach_app_thread(&mut self, pid: Pid, thread_name: Option<&str>) -> Result<()> {
+        if let Some(thread_name) = thread_name {
+            self.attach_app_threads(pid, &[thread_name])
+        } else {
+            self.attach_app_threads(pid, &[])
+        }
+    }
+
+    /// Attach the analyzer to threads whose names match the target application.
+    pub fn attach_app_threads(&mut self, pid: Pid, thread_names: &[&str]) -> Result<()> {
         if self.contains(pid) {
             return Ok(());
         }
 
-        let uprobe = UprobeHandler::attach_app(pid, thread_name)?;
+        let uprobe = UprobeHandler::attach_app(pid, thread_names)?;
         self.map.insert(pid, AnalyzeTarget::new(uprobe));
         self.register_poll()?;
 

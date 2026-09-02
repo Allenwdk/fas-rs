@@ -39,7 +39,7 @@ impl Drop for UprobeHandler {
 }
 
 impl UprobeHandler {
-    pub fn attach_app(pid: i32, thread_name: Option<&str>) -> Result<Self> {
+    pub fn attach_app(pid: i32, thread_names: &[&str]) -> Result<Self> {
         const LIBGUI: &str = "/system/lib64/libgui.so";
         const SYMBOLS: &[&str] = &[
             "_ZN7android7Surface16hook_queueBufferEP13ANativeWindowP19ANativeWindowBufferi",
@@ -54,9 +54,9 @@ impl UprobeHandler {
             .filter_map(|entry| entry.ok())
             .filter_map(|entry| {
                 let tid = entry.file_name().to_str()?.parse::<i32>().ok()?;
-                if let Some(thread_name) = thread_name {
+                if !thread_names.is_empty() {
                     let name = fs::read_to_string(entry.path().join("comm")).ok()?;
-                    if name.trim() != thread_name {
+                    if !thread_names.iter().any(|candidate| name.trim() == *candidate) {
                         return None;
                     }
                 }
@@ -64,10 +64,10 @@ impl UprobeHandler {
             })
             .collect::<Vec<_>>();
         if tids.is_empty() {
-            if let Some(thread_name) = thread_name {
+            if !thread_names.is_empty() {
                 return Err(AnalyzerError::ThreadNotFound {
                     pid,
-                    name: thread_name.into(),
+                    name: thread_names.join(", "),
                 });
             }
             return Err(AnalyzerError::AttachError {
@@ -91,7 +91,7 @@ impl UprobeHandler {
                 }
             }
             if attached > 0 {
-                log::info!("attached queueBuffer uprobe for pid {pid} using {symbol} to {attached}/{} threads", tids.len());
+                log::info!("attached queueBuffer uprobe for pid {pid} using {symbol} to {attached}/{} matching threads", tids.len());
                 return Ok(Self { bpf });
             }
         }
