@@ -52,7 +52,20 @@ jobs:
       - name: Other deps
         run: |
           sudo apt update
-          sudo apt install gcc-multilib
+          sudo apt install -y gcc-multilib
+
+          # bpf-linker 0.11.x uses the LLVM 23 C API.  ubuntu-latest only
+          # provides older LLVM versions, so add the official LLVM repository
+          # and expose its versioned tools to frame-analyzer's build script.
+          wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
+          sudo bash /tmp/llvm.sh 23
+          sudo apt install -y llvm-23 llvm-23-dev clang-23 lld-23 libclang-23-dev
+          export PATH="/usr/lib/llvm-23/bin:$PATH"
+          echo "/usr/lib/llvm-23/bin" >> "$GITHUB_PATH"
+          echo "LLVM_PREFIX=/usr/lib/llvm-23" >> "$GITHUB_ENV"
+          echo "LLVM_CONFIG_PATH=/usr/lib/llvm-23/bin/llvm-config" >> "$GITHUB_ENV"
+          llvm-config --version
+          test "$(llvm-config --version | cut -d. -f1)" = 23
       - name: Build
         run: |
           export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
@@ -99,7 +112,20 @@ jobs:
       - name: Other deps
         run: |
           sudo apt update
-          sudo apt install gcc-multilib
+          sudo apt install -y gcc-multilib
+
+          # bpf-linker 0.11.x uses the LLVM 23 C API.  ubuntu-latest only
+          # provides older LLVM versions, so add the official LLVM repository
+          # and expose its versioned tools to frame-analyzer's build script.
+          wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
+          sudo bash /tmp/llvm.sh 23
+          sudo apt install -y llvm-23 llvm-23-dev clang-23 lld-23 libclang-23-dev
+          export PATH="/usr/lib/llvm-23/bin:$PATH"
+          echo "/usr/lib/llvm-23/bin" >> "$GITHUB_PATH"
+          echo "LLVM_PREFIX=/usr/lib/llvm-23" >> "$GITHUB_ENV"
+          echo "LLVM_CONFIG_PATH=/usr/lib/llvm-23/bin/llvm-config" >> "$GITHUB_ENV"
+          llvm-config --version
+          test "$(llvm-config --version | cut -d. -f1)" = 23
       - name: Build
         run: |
           export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
