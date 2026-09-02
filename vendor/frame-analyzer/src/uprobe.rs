@@ -40,10 +40,12 @@ impl UprobeHandler {
     pub fn attach_app(pid: i32) -> Result<Self> {
         const LIBGUI: &str = "/system/lib64/libgui.so";
         const SYMBOLS: &[&str] = &[
+            "_ZN7android7Surface16hook_queueBufferEP13ANativeWindowP19ANativeWindowBufferi",
+            "_ZN7android7Surface19queueBufferInternalEP13ANativeWindowP19ANativeWindowBufferi",
+            "_ZN7android7Surface11queueBufferERKNS_2spINS_13GraphicBufferEEERKNS_23SurfaceQueueBufferInputEPNS_24SurfaceQueueBufferOutputE",
+            "_ZN7android7Surface11queueBufferERKNS_2spINS_13GraphicBufferEEERKNS1_INS_5FenceEEEPNS_24SurfaceQueueBufferOutputE",
             "_ZN7android7Surface11queueBufferEP19ANativeWindowBufferi",
             "_ZN7android7Surface11queueBufferEP19ANativeWindowBufferiPNS_24SurfaceQueueBufferOutputE",
-            "_ZN7android7Surface11queueBufferERKNS_2spINS_13GraphicBufferEEERKNS1_INS_5FenceEEEPNS_24SurfaceQueueBufferOutputE",
-            "_ZN7android7Surface11queueBufferERKNS_2spINS_13GraphicBufferEEERKNS1_INS_5FenceEEEPKNS_23SurfaceQueueBufferInputEPNS_24SurfaceQueueBufferOutputE",
         ];
 
         let mut bpf = load_bpf()?;
