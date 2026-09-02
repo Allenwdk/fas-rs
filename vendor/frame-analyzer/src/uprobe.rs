@@ -18,7 +18,7 @@
  */
 use aya::{
     Ebpf,
-    maps::{MapData, RingBuf},
+    maps::{Array, MapData, RingBuf},
     programs::UProbe,
 };
 
@@ -49,12 +49,14 @@ impl UprobeHandler {
         ];
 
         let mut bpf = load_bpf()?;
+        let mut target_tgid: Array<_, u32> = Array::try_from(bpf.map_mut("TARGET_TGID").unwrap())?;
+        target_tgid.set(0, pid as u32, 0)?;
         let program: &mut UProbe = bpf.program_mut("frame_analyzer_ebpf").unwrap().try_into()?;
         program.load()?;
 
         let mut last_error = None;
         for symbol in SYMBOLS {
-            match program.attach(Some(symbol), 0, LIBGUI, Some(pid)) {
+            match program.attach(Some(symbol), 0, LIBGUI, None) {
                 Ok(_) => {
                     log::info!("attached queueBuffer uprobe for pid {pid} using {symbol}");
                     return Ok(Self { bpf });

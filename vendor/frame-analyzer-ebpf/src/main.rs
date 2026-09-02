@@ -20,13 +20,16 @@
 #![no_main]
 
 use aya_ebpf::{
-    helpers::gen::bpf_ktime_get_ns,
+    helpers::{bpf_get_current_pid_tgid, gen::bpf_ktime_get_ns},
     macros::{map, uprobe},
-    maps::RingBuf,
+    maps::{Array, RingBuf},
     programs::ProbeContext,
 };
 
 use frame_analyzer_ebpf_common::FrameSignal;
+
+#[map]
+static TARGET_TGID: Array<u32> = Array::with_max_entries(1, 0);
 
 #[map]
 static RING_BUF: RingBuf = RingBuf::with_byte_size(0x1000, 0);
@@ -40,6 +43,14 @@ pub fn frame_analyzer_ebpf(ctx: ProbeContext) -> u32 {
 }
 
 fn try_frame_analyzer_ebpf(ctx: ProbeContext) -> Result<u32, u32> {
+    let tgid = (bpf_get_current_pid_tgid() >> 32) as u32;
+    let Some(target) = TARGET_TGID.get(0) else {
+        return Ok(0);
+    };
+    if *target != tgid {
+        return Ok(0);
+    }
+
     if let Some(mut entry) = RING_BUF.reserve::<FrameSignal>(0) {
         let ktime_ns = unsafe { bpf_ktime_get_ns() };
         entry.write(FrameSignal::new(ktime_ns, ctx.arg::<usize>(0).unwrap()));
